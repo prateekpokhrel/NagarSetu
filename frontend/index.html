@@ -1,0 +1,1334 @@
+<!-- It is the prototype of the project -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NagarSetu | Pro Smart City Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+                        gov: { 50: '#f5f3ff', 100: '#ede9fe', 500: '#8b5cf6', 600: '#7c3aed', 900: '#4c1d95' },
+                        surface: '#fafafa'
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                        'glow-brand': '0 0 20px rgba(14, 165, 233, 0.4)',
+                        'glow-red': '0 0 20px rgba(239, 68, 68, 0.5)'
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan': 'scan 2s linear infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: 0, transform: 'translateX(30px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' },
+                        },
+                        scan: {
+                            '0%': { top: '0%' },
+                            '50%': { top: '100%' },
+                            '100%': { top: '0%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+        }
+
+        /* Abstract Backgrounds */
+        .bg-mesh {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 40% 20%, hsla(200,100%,94%,1) 0px, transparent 50%),
+                radial-gradient(at 80% 0%, hsla(250,100%,96%,1) 0px, transparent 50%),
+                radial-gradient(at 0% 50%, hsla(210,100%,95%,1) 0px, transparent 50%);
+        }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
+        
+        /* Timeline styling for details modal */
+        .timeline-line {
+            position: absolute; left: 15px; top: 24px; bottom: 0; width: 2px; background: #e2e8f0; z-index: 0;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased h-screen w-screen flex flex-col bg-mesh">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] flex flex-col gap-3 pointer-events-none" aria-live="polite"></div>
+
+    <div id="auth-view" class="fixed inset-0 z-50 flex items-center justify-center bg-mesh transition-opacity duration-700">
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-brand-300/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-72 h-72 bg-gov-300/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow delay-200"></div>
+
+        <div class="glass-panel rounded-3xl p-10 max-w-4xl w-full mx-4 shadow-2xl relative z-10 animate-fade-in-up border border-white/60">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center justify-center p-3 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl mb-6 shadow-glow-brand">
+                    <i class="ph-fill ph-bridge text-4xl text-white"></i>
+                </div>
+                <h1 class="text-5xl font-extrabold text-slate-900 tracking-tight mb-3">Nagar<span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-gov-600">Setu</span></h1>
+                <p class="text-lg text-slate-500 font-medium">Your Voice. Verified. Resolved.</p>
+                <div class="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> System Online - v2.0 (Capstone Build)
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <button class="group relative bg-white rounded-2xl p-1 border border-slate-200 hover:border-brand-400 transition-colors cursor-pointer shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-4 focus:ring-brand-500/20" onclick="app.login('citizen')" aria-label="Login as Citizen">
+                    <div class="absolute inset-0 bg-gradient-to-b from-brand-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                    <div class="relative p-6 flex flex-col h-full">
+                        <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-user-focus text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Citizen Portal</h3>
+                        <p class="text-sm text-slate-500 flex-1">File KYC-verified complaints, track real-time AI analysis, and view resolution timelines.</p>
+                        <div class="mt-6 flex items-center text-brand-600 font-semibold text-sm group-hover:gap-3 transition-all gap-1">
+                            Authenticate <i class="ph-bold ph-arrow-right"></i>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="group relative bg-white rounded-2xl p-1 border border-slate-200 hover:border-gov-400 transition-colors cursor-pointer shadow-sm hover:shadow-xl text-left focus:outline-none focus:ring-4 focus:ring-gov-500/20" onclick="app.login('mayor')" aria-label="Login as Mayor">
+                    <div class="absolute inset-0 bg-gradient-to-b from-gov-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                    <div class="relative p-6 flex flex-col h-full">
+                        <div class="w-12 h-12 rounded-xl bg-gov-100 text-gov-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i class="ph-fill ph-buildings text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">Mayor & Admin Command</h3>
+                        <p class="text-sm text-slate-500 flex-1">Monitor city-wide anomalies, manage high-alert dispatches, and oversee SLA deadlines.</p>
+                        <div class="mt-6 flex items-center text-gov-600 font-semibold text-sm group-hover:gap-3 transition-all gap-1">
+                            Access Command <i class="ph-bold ph-arrow-right"></i>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden h-screen w-full flex overflow-hidden">
+        
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-20 lg:w-64 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 z-30 shrink-0">
+            <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-100">
+                <i class="ph-fill ph-bridge text-3xl text-brand-600"></i>
+                <span class="text-xl font-bold text-slate-800 ml-2 hidden lg:block tracking-tight">Nagar<span class="text-brand-600">Setu</span></span>
+            </div>
+            
+            <nav class="flex-1 py-6 flex flex-col gap-2 px-3">
+                <button id="nav-dashboard" onclick="app.switchTab('dashboard')" class="nav-btn flex items-center gap-3 px-3 py-2.5 bg-brand-50 text-brand-700 rounded-xl font-medium transition-colors outline-none focus:ring-2 focus:ring-brand-500">
+                    <i class="ph-fill ph-squares-four text-xl"></i>
+                    <span class="hidden lg:block">Dashboard</span>
+                </button>
+                <button id="nav-map" onclick="app.switchTab('map')" class="nav-btn flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-colors outline-none focus:ring-2 focus:ring-brand-500">
+                    <i class="ph-fill ph-map-pin text-xl"></i>
+                    <span class="hidden lg:block">Live Map</span>
+                </button>
+                <button id="nav-analytics" onclick="app.switchTab('analytics')" class="nav-btn flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-xl font-medium transition-colors outline-none focus:ring-2 focus:ring-brand-500">
+                    <i class="ph-fill ph-chart-line-up text-xl"></i>
+                    <span class="hidden lg:block">Analytics</span>
+                </button>
+                
+                <div class="mt-auto pt-4 border-t border-slate-100">
+                    <button onclick="app.logout()" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-xl font-medium transition-colors group outline-none focus:ring-2 focus:ring-red-500">
+                        <i class="ph-bold ph-sign-out text-xl group-hover:-translate-x-1 transition-transform"></i>
+                        <span class="hidden lg:block">Secure Logout</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-surface relative">
+            <header class="h-16 glass-panel border-b-0 border-l-0 border-r-0 border-slate-200/50 flex items-center justify-between px-6 shrink-0 z-20">
+                <div class="text-slate-500 font-medium text-sm hidden sm:block">
+                    <span id="header-date">Sat, Aug 1, 2026</span> • <span class="text-emerald-600 flex items-center inline-flex gap-1"><i class="ph-fill ph-shield-check"></i> Network Secure</span>
+                </div>
+                
+                <div class="flex items-center gap-5 ml-auto">
+                    <button onclick="app.showToast('No new notifications', 'info')" aria-label="Notifications" class="relative p-2 text-slate-400 hover:text-brand-600 transition-colors rounded-full hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <i class="ph-fill ph-bell-ringing text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                    </button>
+
+                    <div class="h-6 w-px bg-slate-200"></div>
+
+                    <button onclick="app.showToast('Profile settings restricted in Prototype mode', 'info')" class="flex items-center gap-3 cursor-pointer group focus:outline-none rounded-lg focus:ring-2 focus:ring-brand-500 p-1">
+                        <div class="text-right hidden sm:block">
+                            <div id="user-name" class="text-sm font-bold text-slate-800 group-hover:text-brand-600 transition-colors">User Name</div>
+                            <div id="user-role-badge" class="text-xs text-slate-500 font-medium">Role</div>
+                        </div>
+                        <div class="relative">
+                            <img id="user-avatar" src="https://placehold.co/100/e2e8f0/64748b?text=U" class="w-9 h-9 rounded-full border-2 border-white shadow-sm ring-2 ring-transparent group-hover:ring-brand-200 transition-all" alt="User Avatar">
+                            <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+                        </div>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto overflow-x-hidden relative p-4 md:p-8 scroll-smooth" id="scroll-main">
+                
+                <div id="workspace-citizen" class="tab-content hidden max-w-6xl mx-auto space-y-8 animate-fade-in-up">
+                    <div class="bg-gradient-to-r from-brand-900 via-brand-800 to-indigo-900 rounded-3xl p-8 text-white shadow-lg shadow-brand-900/20 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                        
+                        <div class="relative z-10 max-w-xl">
+                            <h2 class="text-3xl font-bold mb-2 tracking-tight" id="citizen-greeting">Welcome back, Pratik</h2>
+                            <p class="text-brand-100 text-sm leading-relaxed mb-6">Your civic identity is KYC-verified. You are authorized to submit, track, and interact with municipal governance directly through NagarSetu AI.</p>
+                            
+                            <button onclick="app.openModal('new-complaint-modal')" class="bg-white text-brand-900 hover:bg-brand-50 px-6 py-3 rounded-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-all flex items-center gap-2 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-brand-500/50">
+                                <i class="ph-bold ph-plus"></i> File New Grievance
+                            </button>
+                        </div>
+                        
+                        <div class="relative z-10 bg-black/20 backdrop-blur-md rounded-2xl p-5 border border-white/10 text-center min-w-[160px]">
+                            <div class="text-brand-200 text-xs font-semibold uppercase tracking-wider mb-1">Civic Trust Score</div>
+                            <div class="text-4xl font-extrabold text-white flex items-center justify-center gap-1">
+                                98 <i class="ph-fill ph-star text-amber-400 text-xl"></i>
+                            </div>
+                            <div class="text-xs text-brand-200 mt-2 flex items-center justify-center gap-1">
+                                <i class="ph-fill ph-trend-up text-emerald-400"></i> Top 5% in Ward 41
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <i class="ph-fill ph-check-circle text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Resolved</div>
+                                <div class="text-2xl font-extrabold text-slate-800">12</div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                                <i class="ph-fill ph-clock-countdown text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">In Progress</div>
+                                <div class="text-2xl font-extrabold text-slate-800" id="cit-in-progress-count">0</div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-5 rounded-2xl flex items-center gap-4 bg-gradient-to-r from-brand-50 to-white border-brand-100">
+                            <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+                                <i class="ph-fill ph-magic-wand text-2xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 text-xs font-bold uppercase tracking-wider">AI Self-Resolved</div>
+                                <div class="text-2xl font-extrabold text-slate-800">3</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
+                            <h3 class="text-lg font-bold text-slate-800">Active Civic Log</h3>
+                            <button onclick="app.showToast('Filtering to show full history...', 'info')" class="text-sm text-brand-600 font-semibold hover:text-brand-700 focus:outline-none">View History</button>
+                        </div>
+                        <div id="citizen-complaint-list" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="workspace-mayor" class="tab-content hidden max-w-7xl mx-auto space-y-6 animate-fade-in-up">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">City Command Center</h2>
+                            <p class="text-slate-500 text-sm mt-1">Real-time governance, AI-triaged queue, and inter-department oversight.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="app.showToast('Ward Filter Menu Opened', 'gov')" class="px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 flex items-center gap-2 shadow-sm hover:bg-slate-200 focus:outline-none">
+                                <i class="ph-fill ph-funnel text-slate-400"></i> Ward All
+                            </button>
+                            <div class="px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm font-bold text-red-600 flex items-center gap-2 shadow-sm relative overflow-hidden">
+                                <div class="absolute inset-0 bg-red-100 opacity-20 animate-pulse"></div>
+                                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse relative z-10"></span>
+                                <span class="relative z-10">Live Link</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+                            <div class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Active Grievances</div>
+                            <div class="text-4xl font-black text-slate-800" id="stat-total">0</div>
+                            <div class="mt-2 text-xs font-medium text-emerald-600 flex items-center gap-1"><i class="ph-bold ph-arrow-down-right"></i> 12% vs last week</div>
+                        </div>
+                        
+                        <div class="glass-card p-5 rounded-2xl border-l-4 border-l-red-500 bg-gradient-to-br from-white to-red-50">
+                            <div class="text-red-600 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1"><i class="ph-fill ph-warning-circle"></i> High Alert (SLA Risk)</div>
+                            <div class="text-4xl font-black text-slate-800" id="stat-alert">0</div>
+                            <div class="mt-2 text-xs font-medium text-red-600 flex items-center gap-1">Requires immediate dispatch</div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl">
+                            <div class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Unassigned / Pending</div>
+                            <div class="text-4xl font-black text-slate-800" id="stat-unassigned">0</div>
+                            <div class="mt-2 text-xs font-medium text-amber-500 flex items-center gap-1"><i class="ph-fill ph-clock"></i> AI Triage Complete</div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl bg-slate-900 text-white shadow-lg">
+                            <div class="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Avg. Resolution Time</div>
+                            <div class="text-4xl font-black text-white">42<span class="text-xl text-slate-400 font-medium">h</span></div>
+                            <div class="mt-2 text-xs font-medium text-emerald-400 flex items-center gap-1"><i class="ph-bold ph-arrow-down-right"></i> Better than SLA (48h)</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 glass-card rounded-2xl overflow-hidden flex flex-col h-[500px]">
+                            <div class="px-6 py-4 border-b border-slate-100 bg-white/50 backdrop-blur-md flex justify-between items-center z-10 sticky top-0">
+                                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="ph-fill ph-list-dashes text-gov-600"></i> AI-Triaged Queue
+                                </h3>
+                                <div class="flex gap-2">
+                                    <div class="relative">
+                                        <i class="ph-regular ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                        <input type="text" id="mayor-search" onkeyup="app.filterMayorTable()" placeholder="Search ID, Dept..." class="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-gov-400 transition-colors w-48">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="overflow-y-auto flex-1 custom-scroll bg-white relative">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="sticky top-0 bg-slate-50/90 backdrop-blur-sm shadow-sm z-10">
+                                        <tr class="text-xs text-slate-500 uppercase tracking-wider">
+                                            <th class="px-6 py-3 font-bold">Ticket & Info</th>
+                                            <th class="px-6 py-3 font-bold">AI Priority</th>
+                                            <th class="px-6 py-3 font-bold">Department</th>
+                                            <th class="px-6 py-3 font-bold">SLA Deadline</th>
+                                            <th class="px-6 py-3 font-bold text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mayor-complaint-list" class="divide-y divide-slate-100 text-sm">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                                <div id="mayor-no-results" class="hidden absolute inset-0 flex items-center justify-center text-slate-500 font-medium">No complaints match search.</div>
+                            </div>
+                        </div>
+
+                        <!-- Mini Map in Mayor Dashboard -->
+                        <div class="glass-card rounded-2xl p-6 flex flex-col h-[500px]">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                                <i class="ph-fill ph-map-trifold text-brand-600"></i> Live Anomaly Map
+                            </h3>
+                            <button onclick="app.switchTab('map')" class="flex-1 bg-slate-100 rounded-xl relative overflow-hidden border border-slate-200 group text-left w-full hover:border-brand-300 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                <div class="absolute top-1/4 left-1/4 group-hover:scale-110 transition-transform">
+                                    <div class="w-4 h-4 bg-red-500 rounded-full animate-pulse absolute"></div>
+                                    <div class="w-4 h-4 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                                </div>
+                                <div class="absolute bottom-1/3 right-1/4">
+                                    <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
+                                </div>
+                                <div class="absolute top-1/2 right-1/3">
+                                    <div class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                                </div>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+                                    <span class="bg-white px-4 py-2 rounded-lg font-bold text-sm text-slate-700 shadow-lg flex items-center gap-2">Expand Map <i class="ph-bold ph-arrows-out"></i></span>
+                                </div>
+                            </button>
+                            
+                            <div class="mt-4 pt-4 border-t border-slate-100">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">System Load</h4>
+                                <div class="w-full bg-slate-100 rounded-full h-2 mb-1">
+                                    <div class="bg-gradient-to-r from-emerald-400 to-emerald-500 h-2 rounded-full" style="width: 24%"></div>
+                                </div>
+                                <div class="text-[10px] text-slate-400 text-right">Model Servers Nominal (24%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="workspace-map" class="tab-content hidden h-full w-full max-w-7xl mx-auto flex flex-col animate-fade-in-up">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-extrabold text-slate-900 flex items-center gap-2"><i class="ph-fill ph-map-pin text-brand-600"></i> City Anomaly Grid</h2>
+                        <div class="flex gap-2">
+                            <button class="bg-white px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm">Filter: All Wards</button>
+                            <button class="bg-red-50 px-3 py-1.5 border border-red-200 rounded-lg text-sm font-semibold text-red-700 shadow-sm flex items-center gap-1"><i class="ph-fill ph-warning-circle"></i> High Alerts Only</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 bg-slate-200 rounded-2xl border border-slate-300 relative overflow-hidden shadow-inner flex items-center justify-center group cursor-crosshair">
+                        <!-- Simulated Map Background -->
+                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] opacity-20"></div>
+                        <div class="absolute inset-0 opacity-10 bg-gradient-to-br from-blue-500 to-emerald-500"></div>
+                        
+                        <!-- Pinging Map Markers -->
+                        <button onclick="app.openComplaintDetails('TKT-9021')" class="absolute top-[30%] left-[40%] hover:scale-125 transition-transform group/pin focus:outline-none" aria-label="View Map Pin Ticket TKT-9021">
+                            <div class="w-5 h-5 bg-red-500 rounded-full absolute -top-2.5 -left-2.5 animate-ping opacity-75"></div>
+                            <div class="w-3 h-3 bg-red-600 rounded-full border-2 border-white absolute -top-1.5 -left-1.5 shadow-md"></div>
+                            <div class="opacity-0 group-hover/pin:opacity-100 absolute top-4 left-1/2 -translate-x-1/2 bg-white px-2 py-1 rounded shadow-lg border border-slate-200 text-xs font-bold text-slate-800 whitespace-nowrap transition-opacity z-10 pointer-events-none">Fire Dept - High Alert</div>
+                        </button>
+                        
+                        <button onclick="app.openComplaintDetails('TKT-8914')" class="absolute top-[60%] left-[65%] hover:scale-125 transition-transform group/pin focus:outline-none" aria-label="View Map Pin Ticket TKT-8914">
+                            <div class="w-3 h-3 bg-amber-500 rounded-full border-2 border-white absolute -top-1.5 -left-1.5 shadow-md"></div>
+                            <div class="opacity-0 group-hover/pin:opacity-100 absolute top-4 left-1/2 -translate-x-1/2 bg-white px-2 py-1 rounded shadow-lg border border-slate-200 text-xs font-bold text-slate-800 whitespace-nowrap transition-opacity z-10 pointer-events-none">Water Board - Medium</div>
+                        </button>
+
+                        <div class="bg-white/90 backdrop-blur p-4 rounded-xl shadow-lg border border-slate-200 z-10 flex flex-col items-center max-w-xs text-center">
+                            <i class="ph-fill ph-map-trifold text-4xl text-brand-300 mb-2"></i>
+                            <h4 class="font-bold text-slate-800">Map Module Active</h4>
+                            <p class="text-xs text-slate-500 mt-1">Geo-spatial clustering is running. Click markers for details. Full GIS integration pending phase 2.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="workspace-analytics" class="tab-content hidden max-w-7xl mx-auto space-y-6 animate-fade-in-up">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI & Operations Analytics</h2>
+                            <p class="text-slate-500 text-sm mt-1">System performance, department load, and SLA compliance metrics.</p>
+                        </div>
+                        <button class="bg-white border border-slate-200 shadow-sm px-4 py-2 rounded-lg text-sm font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50 transition-colors">
+                            <i class="ph-bold ph-download-simple"></i> Export PDF Report
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="ph-fill ph-chart-bar text-brand-600"></i> Complaints by Department</h3>
+                            <div class="relative h-64 w-full">
+                                <canvas id="chart-departments"></canvas>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="ph-fill ph-target text-gov-600"></i> SLA Compliance (Auto-Resolved vs Standard)</h3>
+                            <div class="relative h-64 w-full flex justify-center">
+                                <canvas id="chart-sla"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <div id="new-complaint-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden animate-slide-in-right border border-slate-200">
+            
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph-fill ph-paper-plane-tilt text-brand-500"></i> Submit New Grievance
+                </h3>
+                <button onclick="app.closeModal('new-complaint-modal')" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300" aria-label="Close Modal"><i class="ph-bold ph-x"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 custom-scroll" id="nc-form-step">
+                <div class="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <i class="ph-fill ph-info text-brand-600 text-xl mt-0.5 shrink-0"></i>
+                    <p class="text-sm text-brand-800 font-medium leading-relaxed">
+                        Provide clear details. Our <span class="font-bold text-brand-900">3-Model AI Pipeline</span> will analyze your text/media, categorize the issue, assign severity, and route it to the exact municipal department instantly.
+                    </p>
+                </div>
+                
+                <form id="new-complaint-form" onsubmit="app.processAIForm(event)" class="space-y-5">
+                    <div>
+                        <label for="nc-title" class="block text-sm font-bold text-slate-700 mb-1.5">Issue Title</label>
+                        <input type="text" id="nc-title" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-400 shadow-sm" placeholder="e.g., Live wire sparked and fell near Sector 4 park">
+                    </div>
+                    <div>
+                        <label for="nc-desc" class="block text-sm font-bold text-slate-700 mb-1.5">Detailed Description</label>
+                        <textarea id="nc-desc" required rows="4" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all text-sm text-slate-800 placeholder:text-slate-400 shadow-sm resize-none" placeholder="Provide context, landmarks, and timeline if known..."></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">GPS Coordinates (Auto)</label>
+                            <div class="flex gap-2">
+                                <div class="flex-1 px-3 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-sm font-mono flex items-center shadow-inner">
+                                    <i class="ph-fill ph-map-pin mr-2 text-slate-400"></i> 20.296°N, 85.824°E
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Attach Media Evidence</label>
+                            <button type="button" onclick="app.showToast('Media uploader mock invoked.', 'info')" class="w-full border-2 border-dashed border-slate-300 rounded-xl p-2.5 text-center text-sm font-medium text-slate-500 hover:bg-slate-50 hover:border-brand-400 hover:text-brand-600 transition-colors cursor-pointer group flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <i class="ph-bold ph-camera text-lg group-hover:scale-110 transition-transform"></i> Upload Photo/Video
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100 flex justify-end gap-3 mt-4">
+                        <button type="button" onclick="app.closeModal('new-complaint-modal')" class="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors focus:outline-none">Cancel</button>
+                        <button type="submit" class="bg-slate-900 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-slate-500">
+                            <i class="ph-fill ph-cpu"></i> Analyze via AI Engine
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- AI Processing Pipeline -->
+            <div class="hidden p-8 flex-col bg-slate-900 h-[450px] relative overflow-hidden" id="nc-ai-step">
+                <div class="absolute left-0 right-0 h-1 bg-brand-500/50 shadow-[0_0_15px_#0ea5e9] animate-scan z-0"></div>
+                <div class="relative z-10 h-full flex flex-col">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="ph-fill ph-brain text-3xl text-brand-400"></i>
+                        <div>
+                            <h4 class="text-xl font-bold text-white tracking-tight">NagarSetu AI Core</h4>
+                            <p class="text-xs text-brand-300 font-mono" id="ai-status-desc">Initializing multi-model pipeline...</p>
+                        </div>
+                    </div>
+                    <div class="flex-1 bg-black/40 rounded-xl p-4 font-mono text-sm border border-slate-700/50 overflow-hidden flex flex-col gap-3 shadow-inner">
+                        <div class="text-slate-500">>>> System input received. Extracting semantics...</div>
+                        <div class="flex items-start gap-3 opacity-30 transition-opacity duration-500" id="ai-step-1">
+                            <div class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 shrink-0 mt-0.5 ai-indicator"></div>
+                            <div>
+                                <div class="text-brand-400 font-bold">Model 1: Categorization Classifier</div>
+                                <div class="text-slate-400 text-xs mt-1 h-0 overflow-hidden transition-all duration-500 ai-detail">Analyzing NLP tokens against municipal dictionary... Match found.</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 opacity-30 transition-opacity duration-500" id="ai-step-2">
+                            <div class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 shrink-0 mt-0.5 ai-indicator"></div>
+                            <div>
+                                <div class="text-amber-400 font-bold">Model 2: Severity & Risk Engine</div>
+                                <div class="text-slate-400 text-xs mt-1 h-0 overflow-hidden transition-all duration-500 ai-detail">Evaluating risk parameters, emergency keywords, and spatial data...</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 opacity-30 transition-opacity duration-500" id="ai-step-3">
+                            <div class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 shrink-0 mt-0.5 ai-indicator"></div>
+                            <div>
+                                <div class="text-emerald-400 font-bold">Model 3: Self-Help Advisory Engine</div>
+                                <div class="text-slate-400 text-xs mt-1 h-0 overflow-hidden transition-all duration-500 ai-detail">Querying knowledge base for citizen-resolvable steps...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Result -->
+            <div class="hidden p-6 flex-col bg-slate-50 h-[450px]" id="nc-result-step">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mx-auto mb-3 text-brand-600 border border-slate-100">
+                        <i class="ph-fill ph-check-circle text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">Analysis Complete</h3>
+                    <p class="text-sm text-slate-500">Review the auto-assigned parameters before final submission.</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5 mb-5 flex-1 shadow-sm">
+                    <div class="grid grid-cols-2 gap-y-4 gap-x-6">
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Routed Department</div>
+                            <div class="font-bold text-slate-800 flex items-center gap-2 text-sm bg-slate-100 px-3 py-2 rounded-lg border border-slate-200" id="res-category">
+                                <i class="ph-fill ph-buildings text-brand-500 text-lg"></i> <span>-</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Assigned Priority</div>
+                            <div id="res-priority" class="h-10 flex items-center">-</div>
+                        </div>
+                    </div>
+                    <div id="res-advisory-box" class="hidden mt-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm animate-fade-in-up">
+                        <div class="flex gap-3">
+                            <i class="ph-fill ph-lightbulb text-amber-500 text-2xl shrink-0 drop-shadow-sm"></i>
+                            <div>
+                                <h5 class="font-bold text-slate-800 text-sm">Instant Self-Help Suggestion</h5>
+                                <p class="text-sm text-slate-600 mt-1 leading-relaxed" id="res-advisory-text"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-2">
+                    <button type="button" onclick="app.resetForm()" class="text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1 focus:outline-none"><i class="ph-bold ph-arrow-left"></i> Edit Details</button>
+                    <button type="button" onclick="app.confirmSubmission()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2 focus:outline-none focus:ring-4 focus:ring-brand-500/50">
+                        Confirm & Dispatch <i class="ph-bold ph-paper-plane-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mayor-action-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up border border-slate-200">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2" id="ma-title">Manage Ticket</h3>
+                <button onclick="app.closeModal('mayor-action-modal')" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors focus:outline-none" aria-label="Close Modal"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="p-6 bg-white">
+                <input type="hidden" id="ma-complaint-id">
+                
+                <!-- Assign Dept View -->
+                <div id="ma-assign-view" class="hidden space-y-5 animate-fade-in-up">
+                    <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 text-sm text-brand-800 flex gap-2">
+                        <i class="ph-fill ph-check-circle text-brand-600 mt-0.5"></i>
+                        <span>AI has pre-selected the optimal department based on classification confidence.</span>
+                    </div>
+                    <div>
+                        <label for="ma-dept-select" class="block text-sm font-bold text-slate-700 mb-1.5">Dispatch To Department</label>
+                        <div class="relative">
+                            <select id="ma-dept-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all font-medium text-slate-800 appearance-none shadow-sm cursor-pointer">
+                                <option value="Roads & Transport">Roads & Transport</option>
+                                <option value="Water Supply">Water Supply & Sanitation</option>
+                                <option value="Electricity Board">Electricity Board (CESU)</option>
+                                <option value="Solid Waste Management">Solid Waste Management</option>
+                                <option value="Disaster Response Force">Disaster Response Force (ODRAF)</option>
+                            </select>
+                            <i class="ph-bold ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+                    <button onclick="app.executeAssign()" class="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 focus:outline-none">
+                        <i class="ph-fill ph-briefcase"></i> Authorize Dispatch
+                    </button>
+                </div>
+
+                <!-- Extend Deadline View -->
+                <div id="ma-extend-view" class="hidden space-y-5 animate-fade-in-up">
+                    <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-900 flex gap-3 shadow-inner">
+                        <i class="ph-fill ph-warning-octagon text-amber-600 text-2xl shrink-0 mt-1"></i>
+                        <div>
+                            <span class="font-bold block mb-1">Mayor Override Required</span>
+                            Extensions modify SLA contracts. Justification is permanently written to the public transparency ledger.
+                        </div>
+                    </div>
+                    <div>
+                        <label for="ma-new-date" class="block text-sm font-bold text-slate-700 mb-1.5">New Authorized Deadline</label>
+                        <input type="date" id="ma-new-date" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all font-medium text-slate-800 shadow-sm cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="ma-justification" class="block text-sm font-bold text-slate-700 mb-1.5">Mandatory Public Justification</label>
+                        <textarea id="ma-justification" rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all text-sm text-slate-800 placeholder:text-slate-400 shadow-sm resize-none" placeholder="State official reason for delay (min 10 chars)..."></textarea>
+                    </div>
+                    <button onclick="app.executeExtend()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-amber-500/30 flex items-center justify-center gap-2 focus:outline-none">
+                        <i class="ph-fill ph-signature"></i> Sign & Authorize Extension
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="complaint-details-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in-up border border-slate-200">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph-fill ph-file-text text-brand-600"></i> Complaint Ledger
+                </h3>
+                <button onclick="app.closeModal('complaint-details-modal')" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors focus:outline-none"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll flex-1 bg-white">
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                    <div>
+                        <div class="text-sm text-slate-500 font-bold mb-1">Ticket ID</div>
+                        <div class="text-2xl font-black text-slate-800" id="cd-id">TKT-0000</div>
+                    </div>
+                    <div class="text-right">
+                        <div id="cd-status-badge"></div>
+                        <div class="text-xs text-slate-400 mt-2 font-medium" id="cd-date">Submitted: YYYY-MM-DD</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Details Col -->
+                    <div class="space-y-5">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Issue Reported</h4>
+                            <p class="font-bold text-slate-800 text-lg leading-tight" id="cd-title">Title goes here</p>
+                            <p class="text-sm text-slate-600 mt-2 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100" id="cd-desc">Description goes here</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-brand-50 p-3 rounded-xl border border-brand-100">
+                                <div class="text-[10px] font-bold text-brand-500 uppercase">AI Routed Dept</div>
+                                <div class="font-bold text-brand-900 text-sm mt-1 truncate" id="cd-dept">Dept</div>
+                            </div>
+                            <div id="cd-severity-box" class="p-3 rounded-xl border">
+                                <div class="text-[10px] font-bold uppercase" id="cd-sev-label">Priority</div>
+                                <div class="font-bold text-sm mt-1" id="cd-sev-val">High</div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Media Evidence</h4>
+                            <div class="w-full h-32 bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 group cursor-pointer hover:bg-slate-200 transition-colors">
+                                <div class="text-center group-hover:scale-105 transition-transform">
+                                    <i class="ph-fill ph-image text-3xl mb-1"></i>
+                                    <div class="text-xs font-semibold">View Attachment</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Col -->
+                    <div class="relative pl-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Verification & Resolution Timeline</h4>
+                        <div class="timeline-line"></div>
+                        <div class="space-y-6 relative z-10" id="cd-timeline">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button onclick="app.closeModal('complaint-details-modal')" class="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl hover:bg-black transition-colors focus:outline-none shadow-md">Close Ledger</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            role: null,
+            currentTab: 'dashboard',
+            chartInstances: [],
+            
+            // Comprehensive Mock Data
+            mockData: [
+                { id: 'TKT-9021', title: 'Massive Fire in Godown Market Area', desc: 'Huge fire breaking out in the main market godown area. Needs immediate attention. Smoke visible from 2km away.', category: 'Disaster Response Force', severity: 'High Alert', status: 'In Progress', date: '2026-08-01', deadline: '2026-08-01', department: 'Fire Dept', user: 'Rahul K.', verified: true },
+                { id: 'TKT-8914', title: 'Main Water Pipe Burst causing Flooding', desc: 'Water line completely shattered causing road flooding near Sector 4. Traffic is being blocked.', category: 'Water Supply', severity: 'High', status: 'Assigned', date: '2026-07-31', deadline: '2026-08-02', department: 'Water Board', user: 'Pratik P.', verified: true },
+                { id: 'TKT-8910', title: 'Live wire sparking near primary school', desc: 'Broken wire touching the metal fence. Extremely dangerous for passing children.', category: 'Electricity Board', severity: 'High Alert', status: 'Submitted', date: '2026-08-01', deadline: '2026-08-01', department: 'Unassigned', user: 'Anita S.', verified: true },
+                { id: 'TKT-8802', title: 'Garbage accumulation blocking walkway', desc: 'Regular bins overflow near the park. Foul smell for 3 days.', category: 'Solid Waste Management', severity: 'General', status: 'Resolved', date: '2026-07-28', deadline: '2026-08-04', department: 'Sanitation', user: 'Pratik P.', verified: true },
+                { id: 'TKT-8799', title: 'Pothole on Ring Road', desc: 'Deep pothole causing traffic slowdown and vehicle damage.', category: 'Roads & Transport', severity: 'Medium', status: 'Submitted', date: '2026-08-01', deadline: '2026-08-08', department: 'Unassigned', user: 'Vikram D.', verified: true },
+                { id: 'TKT-8750', title: 'Streetlight completely dark on 4th Avenue', desc: 'Entire stretch of road has no working lights. Security risk at night.', category: 'Electricity Board', severity: 'Medium', status: 'Resolved', date: '2026-07-25', deadline: '2026-07-30', department: 'CESU', user: 'Pratik P.', verified: true }
+            ],
+            tempComplaint: null,
+
+            init() {
+                this.renderAll();
+                // Set default date in header
+                document.getElementById('header-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            },
+
+            login(role) {
+                this.role = role;
+                const authView = document.getElementById('auth-view');
+                authView.classList.add('opacity-0', 'scale-95');
+                
+                setTimeout(() => {
+                    authView.classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    
+                    if(role === 'citizen') {
+                        document.getElementById('user-name').innerText = "Pratik Pokhrel";
+                        document.getElementById('user-role-badge').innerText = "KYC Verified Citizen";
+                        document.getElementById('user-avatar').src = "https://placehold.co/100/0ea5e9/ffffff?text=PP&font=Montserrat";
+                        this.showToast("Secure Citizen Session Established", "success");
+                    } else {
+                        document.getElementById('user-name').innerText = "Mayor Command";
+                        document.getElementById('user-role-badge').innerHTML = `<span class="text-gov-600 font-bold">Admin Clearance level 1</span>`;
+                        document.getElementById('user-avatar').src = "https://placehold.co/100/7c3aed/ffffff?text=MC&font=Montserrat";
+                        this.showToast("Command Center Initialized", "gov");
+                    }
+                    this.switchTab('dashboard'); // Default tab
+                }, 500);
+            },
+
+            logout() {
+                this.role = null;
+                document.getElementById('main-app').classList.add('hidden');
+                const authView = document.getElementById('auth-view');
+                authView.classList.remove('hidden');
+                setTimeout(() => {
+                    authView.classList.remove('opacity-0', 'scale-95');
+                }, 10);
+            },
+
+            switchTab(tabId) {
+                this.currentTab = tabId;
+                
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                
+                // Update Sidebar Styles
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('bg-brand-50', 'text-brand-700');
+                    btn.classList.add('text-slate-500', 'hover:bg-slate-50');
+                });
+                
+                const activeBtn = document.getElementById(`nav-${tabId}`);
+                if(activeBtn) {
+                    activeBtn.classList.remove('text-slate-500', 'hover:bg-slate-50');
+                    activeBtn.classList.add('bg-brand-50', 'text-brand-700');
+                }
+
+                // Route to correct Dashboard based on Role
+                if(tabId === 'dashboard') {
+                    if(this.role === 'citizen') {
+                        document.getElementById('workspace-citizen').classList.remove('hidden');
+                    } else if (this.role === 'mayor') {
+                        document.getElementById('workspace-mayor').classList.remove('hidden');
+                    }
+                } else {
+                    // Map and Analytics are shared/global views
+                    document.getElementById(`workspace-${tabId}`).classList.remove('hidden');
+                    if (tabId === 'analytics') {
+                        this.renderAnalytics();
+                    }
+                }
+                this.renderAll();
+            },
+
+            renderAll() {
+                if(this.role === 'citizen') this.renderCitizenView();
+                if(this.role === 'mayor') this.renderMayorView();
+            },
+
+            getSeverityConfig(severity) {
+                const map = {
+                    'High Alert': { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200', icon: 'ph-warning-octagon', dot: 'bg-red-500 animate-pulse' },
+                    'High': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', icon: 'ph-fire', dot: 'bg-orange-500' },
+                    'Medium': { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200', icon: 'ph-clock', dot: 'bg-amber-500' },
+                    'General': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', icon: 'ph-info', dot: 'bg-blue-500' }
+                };
+                return map[severity] || map['General'];
+            },
+
+            getStatusConfig(status) {
+                const map = {
+                    'Submitted': { icon: 'ph-paper-plane-right', textCol: 'text-slate-600', bgCol: 'bg-slate-200', borderCol: 'border-slate-300', width: '25%' },
+                    'Assigned': { icon: 'ph-briefcase', textCol: 'text-brand-600', bgCol: 'bg-brand-400', borderCol: 'border-brand-200', width: '50%' },
+                    'In Progress': { icon: 'ph-wrench', textCol: 'text-amber-600', bgCol: 'bg-amber-400', borderCol: 'border-amber-200', width: '75%' },
+                    'Resolved': { icon: 'ph-check-circle', textCol: 'text-emerald-600', bgCol: 'bg-emerald-400', borderCol: 'border-emerald-200', width: '100%' }
+                };
+                return map[status] || map['Submitted'];
+            },
+
+            renderCitizenView() {
+                const container = document.getElementById('citizen-complaint-list');
+                const myComplaints = this.mockData.filter(c => c.user === 'Pratik P.');
+                
+                document.getElementById('cit-in-progress-count').innerText = myComplaints.filter(c => c.status !== 'Resolved').length;
+
+                container.innerHTML = myComplaints.map((c, i) => {
+                    const sev = this.getSeverityConfig(c.severity);
+                    const stat = this.getStatusConfig(c.status);
+                    const isAlert = c.severity === 'High Alert';
+
+                    return `
+                    <div tabindex="0" class="glass-card rounded-2xl p-6 relative overflow-hidden transition-all duration-500 animate-fade-in-up focus:outline-none focus:ring-2 focus:ring-brand-400" style="animation-delay: ${i * 100}ms">
+                        ${isAlert ? '<div class="absolute top-0 left-0 right-0 h-1 bg-red-500"></div>' : ''}
+                        
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-black text-slate-400 tracking-wider">${c.id}</span>
+                                <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 border border-slate-200 font-bold">${c.date}</span>
+                            </div>
+                            <span class="${sev.bg} ${sev.text} ${sev.border} border text-[10px] px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 uppercase tracking-wide shadow-sm">
+                                <span class="w-1.5 h-1.5 rounded-full ${sev.dot}"></span>
+                                ${c.severity}
+                            </span>
+                        </div>
+                        
+                        <h4 class="font-bold text-slate-900 text-lg mb-1 leading-snug line-clamp-2">${c.title}</h4>
+                        <div class="text-xs font-semibold text-slate-500 mb-5 flex items-center gap-1.5">
+                            <i class="ph-fill ph-buildings text-brand-500"></i> ${c.category}
+                        </div>
+                        
+                        <!-- Visual Progress Bar -->
+                        <div class="mb-2 flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <span>Status</span>
+                            <span class="${stat.textCol}">${c.status}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mb-4 overflow-hidden border border-slate-200/50">
+                            <div class="${stat.bgCol} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${stat.width}"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-4 border-t border-slate-100">
+                            <div class="font-semibold text-slate-500">
+                                SLA Target: <span class="${c.status === 'Resolved' ? 'text-slate-400 line-through' : 'text-slate-800'}">${c.deadline}</span>
+                            </div>
+                            <button onclick="app.openComplaintDetails('${c.id}')" class="text-brand-600 font-bold hover:text-brand-800 flex items-center gap-1 focus:outline-none">Details <i class="ph-bold ph-caret-right"></i></button>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            },
+
+            renderMayorView(searchQuery = '') {
+                const total = this.mockData.length;
+                const highAlerts = this.mockData.filter(c => c.severity === 'High Alert' && c.status !== 'Resolved').length;
+                const pending = this.mockData.filter(c => c.status === 'Submitted').length;
+
+                this.animateValue('stat-total', 0, total, 1000);
+                this.animateValue('stat-alert', 0, highAlerts, 1000);
+                this.animateValue('stat-unassigned', 0, pending, 1000);
+
+                const tbody = document.getElementById('mayor-complaint-list');
+                const noResults = document.getElementById('mayor-no-results');
+                
+                const filteredData = this.mockData.filter(c => {
+                    const q = searchQuery.toLowerCase();
+                    return c.id.toLowerCase().includes(q) || 
+                           c.title.toLowerCase().includes(q) || 
+                           c.department.toLowerCase().includes(q) ||
+                           c.category.toLowerCase().includes(q);
+                });
+
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = '';
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                    tbody.innerHTML = filteredData.map((c, i) => {
+                        const sev = this.getSeverityConfig(c.severity);
+                        const stat = this.getStatusConfig(c.status);
+                        
+                        return `
+                        <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0 animate-fade-in-up" style="animation-delay: ${i * 30}ms">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-slate-900 cursor-pointer hover:text-brand-600 transition-colors" onclick="app.openComplaintDetails('${c.id}')" title="View Full Details">${c.id}</div>
+                                <div class="text-xs font-semibold text-slate-500 flex items-center gap-1 mt-0.5"><i class="ph-fill ph-check-circle text-emerald-500"></i> KYC: ${c.user}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full ${sev.bg} ${sev.text} flex items-center justify-center shrink-0">
+                                        <i class="ph-fill ${sev.icon} text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-black uppercase tracking-wider ${sev.text}">${c.severity}</span>
+                                        <div class="text-[10px] text-slate-400 font-bold mt-0.5 truncate max-w-[120px]">${c.title}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-slate-800">${c.department === 'Unassigned' ? `<span class="text-slate-400 italic font-medium text-xs px-2 py-1 bg-slate-100 rounded border border-slate-200">AI Triage Pending...</span>` : c.department}</div>
+                                <div class="text-[10px] font-semibold text-slate-500 mt-0.5">${c.category}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-bold ${c.severity === 'High Alert' ? 'text-red-600' : 'text-slate-700'}">${c.deadline}</div>
+                                <div class="text-[10px] font-bold ${stat.textCol} flex items-center gap-1 mt-0.5"><i class="ph-fill ${stat.icon}"></i> ${c.status}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="app.openMayorAction('${c.id}', 'assign')" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-gov-100 hover:text-gov-700 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-gov-400" title="Dispatch / Re-assign" aria-label="Assign Department">
+                                        <i class="ph-bold ph-briefcase text-lg"></i>
+                                    </button>
+                                    <button onclick="app.openMayorAction('${c.id}', 'extend')" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400" title="Extend SLA" aria-label="Extend SLA">
+                                        <i class="ph-bold ph-calendar-plus text-lg"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        `;
+                    }).join('');
+                }
+            },
+
+            filterMayorTable() {
+                const query = document.getElementById('mayor-search').value;
+                this.renderMayorView(query);
+            },
+
+            animateValue(id, start, end, duration) {
+                const obj = document.getElementById(id);
+                if(!obj) return;
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    obj.innerHTML = Math.floor(progress * (end - start) + start);
+                    if (progress < 1) { window.requestAnimationFrame(step); }
+                };
+                window.requestAnimationFrame(step);
+            },
+
+            openModal(id) {
+                const el = document.getElementById(id);
+                el.classList.remove('hidden');
+                if(id === 'new-complaint-modal') this.resetForm();
+            },
+
+            closeModal(id) {
+                const el = document.getElementById(id);
+                el.classList.add('hidden');
+            },
+
+            openComplaintDetails(id) {
+                const c = this.mockData.find(item => item.id === id);
+                if (!c) return;
+
+                document.getElementById('cd-id').innerText = c.id;
+                document.getElementById('cd-title').innerText = c.title;
+                document.getElementById('cd-desc').innerText = c.desc;
+                document.getElementById('cd-dept').innerText = c.category;
+                document.getElementById('cd-date').innerText = `Submitted: ${c.date}`;
+                
+                const sevUI = this.getSeverityConfig(c.severity);
+                document.getElementById('cd-severity-box').className = `p-3 rounded-xl border ${sevUI.bg} ${sevUI.border}`;
+                document.getElementById('cd-sev-label').className = `text-[10px] font-bold uppercase ${sevUI.text}`;
+                document.getElementById('cd-sev-val').className = `font-bold text-sm mt-1 ${sevUI.text}`;
+                document.getElementById('cd-sev-val').innerText = c.severity;
+
+                const statUI = this.getStatusConfig(c.status);
+                document.getElementById('cd-status-badge').innerHTML = `
+                    <span class="${statUI.bgCol.replace('400', '100')} ${statUI.textCol} border ${statUI.borderCol} px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5 inline-flex shadow-sm">
+                        <i class="ph-fill ${statUI.icon}"></i> ${c.status}
+                    </span>
+                `;
+
+                // Build dynamic timeline
+                const timelineStates = ['Submitted', 'Assigned', 'In Progress', 'Resolved'];
+                let currentIndex = timelineStates.indexOf(c.status);
+                if(currentIndex === -1) currentIndex = 0;
+
+                const timelineContainer = document.getElementById('cd-timeline');
+                timelineContainer.innerHTML = timelineStates.map((state, index) => {
+                    const isCompleted = index <= currentIndex;
+                    const isCurrent = index === currentIndex;
+                    const dotClass = isCurrent ? 'bg-brand-500 border-4 border-brand-200 ring-2 ring-white shadow-lg scale-125' : 
+                                    (isCompleted ? 'bg-brand-400 border-2 border-white' : 'bg-slate-200 border-2 border-white');
+                    const textClass = isCompleted ? 'text-slate-800' : 'text-slate-400';
+                    const iconClass = isCompleted ? 'ph-check-circle text-emerald-500' : 'ph-circle text-slate-300';
+                    
+                    let metaText = '';
+                    if (state === 'Submitted') metaText = `KYC Verified: ${c.user}`;
+                    if (state === 'Assigned') metaText = `Dept: ${c.department}`;
+                    if (state === 'Resolved' && isCompleted) metaText = `Closed before SLA`;
+                    if (state === 'In Progress' && isCurrent) metaText = `Officers en route`;
+
+                    return `
+                    <div class="flex items-start gap-4 ${isCompleted ? 'opacity-100' : 'opacity-60'}">
+                        <div class="w-8 h-8 rounded-full ${dotClass} flex-shrink-0 z-10 flex items-center justify-center transition-all"></div>
+                        <div class="flex-1 pb-4">
+                            <h5 class="text-sm font-bold ${textClass} flex items-center gap-2">${state} ${isCompleted ? `<i class="ph-fill ${iconClass}"></i>` : ''}</h5>
+                            <p class="text-xs ${isCompleted ? 'text-slate-500' : 'text-slate-400'} mt-1 font-medium">${metaText}</p>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+                this.openModal('complaint-details-modal');
+            },
+
+            resetForm() {
+                document.getElementById('nc-form-step').classList.remove('hidden');
+                document.getElementById('nc-ai-step').classList.add('hidden');
+                document.getElementById('nc-result-step').classList.add('hidden');
+                
+                [1,2,3].forEach(i => {
+                    const step = document.getElementById(`ai-step-${i}`);
+                    step.classList.remove('opacity-100');
+                    step.classList.add('opacity-30');
+                    const ind = step.querySelector('.ai-indicator');
+                    ind.innerHTML = '';
+                    ind.className = 'w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center border border-slate-600 shrink-0 mt-0.5 ai-indicator';
+                    const det = step.querySelector('.ai-detail');
+                    det.style.height = '0px';
+                });
+            },
+
+            processAIForm(e) {
+                e.preventDefault();
+                const title = document.getElementById('nc-title').value;
+                const desc = document.getElementById('nc-desc').value;
+                const fullText = (title + " " + desc).toLowerCase();
+
+                document.getElementById('nc-form-step').classList.add('hidden');
+                document.getElementById('nc-ai-step').classList.remove('hidden');
+                document.getElementById('nc-ai-step').classList.add('flex');
+
+                this.simulateAIPipeline(fullText, title, desc);
+            },
+
+            simulateAIPipeline(text, rawTitle, rawDesc) {
+                let result = { category: 'General Administration', severity: 'General', advisory: null };
+
+                if(text.includes('fire') || text.includes('collapse') || text.includes('leak') || text.includes('emergency')) {
+                    result.category = 'Disaster Response Force';
+                    result.severity = 'High Alert';
+                } else if(text.includes('pipe') || text.includes('water') || text.includes('flood')) {
+                    result.category = 'Water Supply';
+                    result.severity = text.includes('burst') ? 'High' : 'Medium';
+                    if(text.includes('bill')) result.advisory = "For water bill discrepancies, you do not need to file a field complaint. You can self-resolve and pay online securely via the State Civic Portal (Link attached).";
+                } else if(text.includes('light') || text.includes('electric') || text.includes('wire') || text.includes('spark')) {
+                    result.category = 'Electricity Board';
+                    result.severity = (text.includes('live wire') || text.includes('spark')) ? 'High Alert' : 'Medium';
+                } else if(text.includes('garbage') || text.includes('trash') || text.includes('clean')) {
+                    result.category = 'Solid Waste Management';
+                    result.severity = 'Medium';
+                } else if(text.includes('pothole') || text.includes('road')) {
+                    result.category = 'Roads & Transport';
+                    result.severity = 'Medium';
+                }
+
+                this.tempComplaint = { title: rawTitle, desc: rawDesc, ...result };
+
+                setTimeout(() => {
+                    document.getElementById('ai-status-desc').innerText = "Model 1 Active: Running NLP Classification...";
+                    this.activateAIStep(1, "text-brand-400", "border-brand-500/50 bg-brand-500/20");
+                }, 800);
+
+                setTimeout(() => {
+                    document.getElementById('ai-status-desc').innerText = "Model 2 Active: Analyzing Severity & Geo-Risk...";
+                    this.activateAIStep(2, "text-amber-400", "border-amber-500/50 bg-amber-500/20");
+                }, 1800);
+
+                setTimeout(() => {
+                    document.getElementById('ai-status-desc').innerText = "Model 3 Active: Querying Advisory Database...";
+                    this.activateAIStep(3, "text-emerald-400", "border-emerald-500/50 bg-emerald-500/20");
+                }, 2800);
+
+                setTimeout(() => {
+                    this.showAIResult();
+                }, 4000);
+            },
+
+            activateAIStep(stepNum, iconCol, bgClass) {
+                const step = document.getElementById(`ai-step-${stepNum}`);
+                step.classList.remove('opacity-30');
+                step.classList.add('opacity-100');
+                
+                const ind = step.querySelector('.ai-indicator');
+                ind.className = `w-5 h-5 rounded-full flex items-center justify-center border shrink-0 mt-0.5 ai-indicator ${bgClass} ${iconCol}`;
+                ind.innerHTML = `<i class="ph-bold ph-check text-[10px]"></i>`;
+                
+                const det = step.querySelector('.ai-detail');
+                det.style.height = '20px'; 
+            },
+
+            showAIResult() {
+                document.getElementById('nc-ai-step').classList.add('hidden');
+                document.getElementById('nc-ai-step').classList.remove('flex');
+                document.getElementById('nc-result-step').classList.remove('hidden');
+                document.getElementById('nc-result-step').classList.add('flex');
+
+                document.getElementById('res-category').innerHTML = `<i class="ph-fill ph-buildings text-brand-500 text-lg"></i> <span>${this.tempComplaint.category}</span>`;
+                
+                const sevUI = this.getSeverityConfig(this.tempComplaint.severity);
+                let badge = `<span class="${sevUI.bg} ${sevUI.text} ${sevUI.border} border px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm"><span class="w-2 h-2 rounded-full ${sevUI.dot}"></span> ${this.tempComplaint.severity} Priority</span>`;
+                
+                if(this.tempComplaint.severity === 'High Alert') {
+                    badge += `<span class="ml-2 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded border border-red-100 animate-pulse">EMERGENCY PROTOCOL</span>`;
+                }
+                document.getElementById('res-priority').innerHTML = badge;
+
+                const advBox = document.getElementById('res-advisory-box');
+                if(this.tempComplaint.advisory) {
+                    advBox.classList.remove('hidden');
+                    document.getElementById('res-advisory-text').innerText = this.tempComplaint.advisory;
+                } else {
+                    advBox.classList.add('hidden');
+                }
+            },
+
+            confirmSubmission() {
+                const newId = `TKT-${Math.floor(Math.random() * 1000) + 9000}`;
+                let d = new Date(2026, 7, 1); 
+                if(this.tempComplaint.severity !== 'High Alert') d.setDate(d.getDate() + 3);
+                
+                this.mockData.unshift({
+                    id: newId,
+                    title: this.tempComplaint.title,
+                    desc: this.tempComplaint.desc,
+                    category: this.tempComplaint.category,
+                    severity: this.tempComplaint.severity,
+                    status: 'Submitted',
+                    date: '2026-08-01',
+                    deadline: d.toISOString().split('T')[0],
+                    department: 'Unassigned',
+                    user: 'Pratik P.',
+                    verified: true
+                });
+
+                this.closeModal('new-complaint-modal');
+                this.renderAll();
+                
+                let toastMsg = `Grievance ${newId} logged to immutable ledger.`;
+                let toastType = 'success';
+                
+                if(this.tempComplaint.severity === 'High Alert') {
+                    toastMsg = `HIGH ALERT FILED. Auto-escalated to Mayor Command and Response Force.`;
+                    toastType = 'error';
+                }
+                
+                this.showToast(toastMsg, toastType);
+                this.tempComplaint = null;
+                document.getElementById('new-complaint-form').reset();
+            },
+
+            openMayorAction(id, actionType) {
+                const complaint = this.mockData.find(c => c.id === id);
+                if(!complaint) return;
+
+                document.getElementById('ma-complaint-id').value = id;
+                document.getElementById('mayor-action-modal').classList.remove('hidden');
+                
+                if(actionType === 'assign') {
+                    document.getElementById('ma-title').innerHTML = `<i class="ph-fill ph-briefcase text-gov-600"></i> Dispatch Ticket ${id}`;
+                    document.getElementById('ma-assign-view').classList.remove('hidden');
+                    document.getElementById('ma-extend-view').classList.add('hidden');
+                    
+                    const sel = document.getElementById('ma-dept-select');
+                    Array.from(sel.options).forEach(opt => {
+                        if(opt.value === complaint.category) opt.selected = true;
+                    });
+                } else {
+                    document.getElementById('ma-title').innerHTML = `<i class="ph-fill ph-calendar-plus text-amber-500"></i> SLA Override ${id}`;
+                    document.getElementById('ma-assign-view').classList.add('hidden');
+                    document.getElementById('ma-extend-view').classList.remove('hidden');
+                    document.getElementById('ma-new-date').value = complaint.deadline;
+                    document.getElementById('ma-justification').value = '';
+                }
+            },
+
+            executeAssign() {
+                const id = document.getElementById('ma-complaint-id').value;
+                const dept = document.getElementById('ma-dept-select').value;
+                
+                const idx = this.mockData.findIndex(c => c.id === id);
+                if(idx > -1) {
+                    this.mockData[idx].department = dept;
+                    this.mockData[idx].status = 'Assigned';
+                }
+                
+                this.closeModal('mayor-action-modal');
+                this.renderAll();
+                this.showToast(`Ticket ${id} dispatched to ${dept}. Officers notified.`, 'gov');
+            },
+
+            executeExtend() {
+                const id = document.getElementById('ma-complaint-id').value;
+                const newDate = document.getElementById('ma-new-date').value;
+                const just = document.getElementById('ma-justification').value;
+
+                if(just.trim().length < 10) {
+                    this.showToast("Compliance Error: Valid justification (>10 chars) is legally required.", "error");
+                    return;
+                }
+                
+                const idx = this.mockData.findIndex(c => c.id === id);
+                if(idx > -1) {
+                    this.mockData[idx].deadline = newDate;
+                }
+                
+                this.closeModal('mayor-action-modal');
+                this.renderAll();
+                this.showToast(`SLA Extended. Justification appended to public transparency log.`, 'gov');
+            },
+
+            renderAnalytics() {
+                // Destroy old charts to prevent memory leaks if re-rendered
+                this.chartInstances.forEach(c => c.destroy());
+                this.chartInstances = [];
+
+                const ctxDept = document.getElementById('chart-departments').getContext('2d');
+                const chartDept = new Chart(ctxDept, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Water Supply', 'Electricity', 'Sanitation', 'Roads', 'Disaster'],
+                        datasets: [{
+                            label: 'Active Tickets',
+                            data: [12, 19, 8, 15, 2],
+                            backgroundColor: '#0ea5e9',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                    }
+                });
+
+                const ctxSla = document.getElementById('chart-sla').getContext('2d');
+                const chartSla = new Chart(ctxSla, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['AI Auto-Resolved', 'Standard Resolution', 'SLA Breached'],
+                        datasets: [{
+                            data: [35, 60, 5],
+                            backgroundColor: ['#10b981', '#3b82f6', '#ef4444'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+
+                this.chartInstances.push(chartDept, chartSla);
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const id = 'toast-' + Date.now();
+                
+                const colors = {
+                    success: 'bg-white border-emerald-200 text-slate-800 shadow-[0_8px_30px_rgb(16,185,129,0.15)] icon-ph-check-circle text-emerald-500',
+                    error: 'bg-red-50 border-red-200 text-red-900 shadow-[0_8px_30px_rgb(239,68,68,0.2)] icon-ph-warning-octagon text-red-600',
+                    gov: 'bg-white border-gov-200 text-slate-800 shadow-[0_8px_30px_rgb(124,58,237,0.15)] icon-ph-shield-check text-gov-600',
+                    info: 'bg-white border-brand-200 text-slate-800 shadow-[0_8px_30px_rgb(14,165,233,0.15)] icon-ph-info text-brand-500'
+                };
+                
+                const style = colors[type] || colors.info;
+                const baseClass = style.split('icon-')[0];
+                const iconInfo = style.split('icon-')[1].split(' ');
+                const iconClass = iconInfo[0];
+                const iconColClass = iconInfo[1];
+
+                const toast = document.createElement('div');
+                toast.id = id;
+                toast.setAttribute('role', 'alert');
+                toast.className = `flex items-center gap-3 p-4 rounded-2xl border ${baseClass} transform transition-all duration-500 translate-x-[120%] opacity-0 w-80 relative overflow-hidden`;
+                
+                const leftBorderCol = iconColClass.replace('text-', 'bg-');
+                toast.innerHTML = `
+                    <div class="absolute left-0 top-0 bottom-0 w-1 ${leftBorderCol}"></div>
+                    <i class="ph-fill ${iconClass} ${iconColClass} text-2xl ml-1"></i>
+                    <p class="text-sm font-bold pr-2 leading-tight">${message}</p>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => toast.classList.remove('translate-x-[120%]', 'opacity-0'), 10);
+                setTimeout(() => {
+                    toast.classList.add('translate-x-[120%]', 'opacity-0');
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            }
+        };
+
+        window.onload = () => {
+            app.init();
+        };
+    </script>
+</body>
+</html>
