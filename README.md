@@ -38,7 +38,7 @@
 **Frontend**
 <br>
 <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React">
-<img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+<img src="https://img.shields.io/badge/JavaScript-3178C6?style=flat-square&logo=Javascript&logoColor=white" alt="JavaScript">
 <img src="https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite">
 <img src="https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind">
 
@@ -239,7 +239,7 @@ Post-resolution ratings feed department accountability scores.
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React, TypeScript, Vite, TailwindCSS |
+| **Frontend** | React, JavaScript, Vite, TailwindCSS |
 | **Backend / API** | Java 21, Spring Boot, Spring Security, Spring Data JPA |
 | **AI / ML Microservice** | Python, FastAPI, PyTorch / scikit-learn, Transformers |
 | **Database** | PostgreSQL + PostGIS |
@@ -270,7 +270,7 @@ Post-resolution ratings feed department accountability scores.
 
 ```
 NagarSetu/
-├── frontend/                   # React + TypeScript client (Citizen & Mayor dashboards)
+├── frontend/                   # React + JavaScript client (Citizen & Mayor dashboards)
 │   ├── src/
 │   │   ├── components/
 │   │   ├── pages/
