@@ -1,0 +1,14 @@
+.app{
+    display:flex;
+    background:#f8fafc;
+    min-height:100vh;
+}
+
+.main-content{
+    margin-left:288px;
+    flex:1;
+}
+
+.dashboard-content{
+    padding:35px;
+}

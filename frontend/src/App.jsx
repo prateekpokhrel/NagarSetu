@@ -1,10 +1,24 @@
-import Chai from "./chai"
+import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
 
 function App() {
-   return(
-    <Chai/>
-    // <h1>Welcome to Nagar Setu</h1>
-   )
-  }
+  return (
+    <div className="app">
 
-export default App
+      <Sidebar />
+
+      <div className="main-content">
+
+        <Navbar />
+
+        <div className="dashboard-content">
+          Hello Dashboard
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default App;
